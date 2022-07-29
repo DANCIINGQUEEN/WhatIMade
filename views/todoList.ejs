@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do List</title>
+    <style>
+        *{
+    margin: 0;
+    padding: 0;
+}
+.header{
+    background: #3b5999;
+    color: #fff;
+    padding: 1rem;
+    text-align: center;
+}
+.content{
+    display: flex;  /*양옆 정렬*/
+    flex-direction: column;
+    align-items: center;    /*가운데정렬*/
+    
+}
+#todo-form{
+    width: 350px;
+    height: 30px;
+    margin-top: 8rem;   /*윗공간이랑 띄우기*/
+    display: flex;
+    align-items: center;
+    justify-content: space-around;  /*주어진 픽셀 안에서 적당하게 공간 나눠가지기*/
+    padding: 1rem;
+}
+label{
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+input{
+    padding: 0.1rem;
+    height: 20px;
+}
+button{
+    border: none;
+    background:#3b5999;
+    color: #fff;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.2rem;
+}
+#todo-list{
+    margin-top: 3rem;
+    list-style: none;
+    width: 300px;
+    padding-left: 2rem;
+}
+.item{
+    padding: 0.5rem;
+}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>To Do List</h1>
+    </div>
+    <div class="content">
+        <form id="todo-form">
+            <div>
+                <label for="todo-input">To Do List</label>
+                <input type="text" id="todo-input">
+            </div>
+            <button class="submit">save</button>
+            <!--form형식때문에 button을누르면자동새로고침-->
+        </form>
+        <ul id="todo-list">
+            <!-- <li class="item">1.할일</li>
+            <li class="item">2.할일</li>
+            <li class="item">3.할일</li>
+            <li class="item">4.할일</li> -->
+        </ul>
+    </div>
+    <script>
+        // //single element
+// console.log(document.getElementById('todo-form')) //id태그를 가져옴
+// //일반적으로는 변수에 담아두고 사용
+// const form=document.getElementById('todo-form')
+// console.log(form)
+// const form2=document.querySelector('#todo-form')    //선택자에 맞는 태그를 가져옴
+// console.log(form2)
+
+// //multiple element
+// console.log(document.querySelectorAll('.item'))
+// const items=document.querySelectorAll('.item');
+// items.forEach((item)=>{
+//     console.log(item);
+// })
+// console.log(document.getElementsByClassName('item'))
+// console.log(document.getElementsByTagName('li'))
+
+const todos=document.querySelector('#todo-list');
+// console.log(todos)
+// todos.style.background='red'
+// todos.lastElementChild.remove();
+// todos.firstElementChild.textContent='fuckyou'
+// todos.lastElementChild.innerHTML='<h1>hello<h1>'
+
+const button=document.querySelector('.submit');
+//console.log(button)
+
+
+// //button.addEventListener(어떤이벤트, 어떤기능)
+// button.addEventListener('click', function(e){
+//     e.preventDefault(); //새로고침 방지
+//     console.log(e.target)
+// })
+button.addEventListener('click', onSubmit)
+const todoInput=document.querySelector('#todo-input');
+
+function onSubmit(e){
+    e.preventDefault();
+    if(todoInput.value===''){ return;}  //빈칸입력하면 무시되도록
+    const li=document.createElement('li');  //li요소 받아오기
+    li.appendChild(document.createTextNode(todoInput.value));   //input value받기
+    //console.log(todoInput.value);
+    //console.log(li);
+    li.classList.add('item');   //li 에 item클래스 포함
+    todos.appendChild(li); //li에 input넣기
+    todoInput.value=''; //save하면 빈칸으로 만들기
+}  
+    </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Master!</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        *{
+margin: 0;
+padding: 0;
+}
+body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.header{
+    width: 100%;
+    background: #3b5999;
+    color: #fff;
+    text-align: center;
+    padding: 1rem;
+}
+.word-display{
+    margin-top: 3rem;
+    font-size: 80px;
+    color: #3b5999;
+}
+.word-input-box{
+    margin-top: 2rem;
+}
+.word-input{
+    padding: 1rem;
+    width: 300px;
+}
+.game-info{
+    margin-top: 2rem;
+    font-size: 30px;
+    display: flex;
+    justify-content: space-between;  /*좌우정렬 */
+    width: 335px;
+}
+.time, .score{
+    font-size: 30px;
+}
+.button {
+    width: 200px;
+    height: 35px;
+    background: #3b5999;
+    color: #fff;
+    border: none;
+    margin-top: 3rem;
+    cursor: pointer;
+}
+.loading{
+    background: #ccc;
+    cursor:not-allowed ;
+}
+    </style>
+
+</head>
+<body>
+    <div class="header">
+        <h1>Typing Master!</h1>
+    </div>
+    <div class="word-display">
+        Hello
+    </div>
+    <div class="word-input-box">
+        <input type="text" class="word-input" />
+    </div>
+    <div class="game-info">
+        <div>
+            remain : <span class="time">0</span> sec
+        </div>
+        <div>
+            score : <span class="score">0</span>
+        </div>
+    </div>
+    <button class="button loading" onclick="run()">Loading...</button>
+    <script>
+        //사용변수
+const Game_Time=9;
+let score=0;
+let time=Game_Time;
+let isPlaying=false;
+let timeInterval;
+let checkInterval;
+let words=[];
+const wordInput=document.querySelector('.word-input');//빈칸에 쓴 글자 가져오기
+const wordDisplay=document.querySelector('.word-display');//올려진 텍스트 가져오기
+const scoreDisplay=document.querySelector('.score');//점수 가져오기
+const timeDisplay=document.querySelector('.time'); // 시간 가져오기
+const button=document.querySelector('.button'); //버튼 가져오기
+
+init();
+function init(){
+    buttonChange('Game Loading..');
+    getWords();
+    wordInput.addEventListener('input',checkMatch)
+}
+
+function run(){ //게임 실행 함수
+    if(isPlaying){ return; }
+    isPlaying=true;
+    time=Game_Time;
+    wordInput.focus();
+    scoreDisplay.innerText=0;
+    timeInterval=setInterval(countDown, 1000);   //이 로직을 계속 실행하는 함수
+    checkInterval=setInterval(checkStatus, 50);
+    buttonChange('Proceeding')
+}
+
+function checkStatus(){ //게임이 진행되는지 판단하는 함수 
+    if(!isPlaying && time===0){
+        buttonChange("Game Start")
+        clearInterval(checkInterval)
+    }
+}
+function getWords(){    // 단어 불러오기 함수
+    axios.get('https://random-word-api.herokuapp.com/word?number=100')
+        .then(function (response) {
+            response.data.forEach((word)=>{
+                if(word.length<10){ 
+                    words.push(word);
+                }
+            })
+            buttonChange('Game Start');
+            console.log(words);
+    })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+    })
+    // words=['안녕', "전기", '감자'];
+    // buttonChange('Game Start');
+}
+
+
+function checkMatch(){//적은 글자가 맞는지 판단하는 함수
+    if(wordInput.value.toLowerCase()===wordDisplay.innerText.toLowerCase()){
+        wordInput.value="";
+        if(!isPlaying){
+            return;
+        }
+        score++;
+        scoreDisplay.innerText=score;
+        time=Game_Time;
+        const randomIndex=Math.floor(Math.random()*words.length);
+        wordDisplay.innerText=words[randomIndex];
+    }
+}
+
+function countDown(){
+    //(조건) ? 참일경우 : 거짓일경우
+    time > 0 ? time-- : isPlaying=false;
+    if(!isPlaying){ clearInterval(timeInterval)}
+    timeDisplay.innerText=time;
+}
+
+function buttonChange(text){
+    button.innerText=text;
+    text === 'Game Start' ? button.classList.remove('loading') : button.classList.add('loading')
+}
+console.log(words.length);
+    </script>
+</body>
+</html>

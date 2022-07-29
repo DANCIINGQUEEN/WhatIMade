@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tetris</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .game-text {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            left: 0;
+            top: 0;
+            color: #fff;
+            font-size: 50px
+        }
+
+        .game-text>button {
+            padding: 0.5rem 1rem;
+            color: #fff;
+            background: salmon;
+            border: none;
+            cursor: pointer;
+            border-radius: 9px
+        }
+
+        .score {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 2rem;
+        }
+
+        .playground>ul {
+            border: 1px solid #333;
+            width: 250px;
+            margin: 0 auto;
+        }
+
+        .playground>ul>li {
+            width: 100%;
+            height: 25px;
+        }
+
+        .playground>ul>li>ul {
+            display: flex;
+        }
+
+        .playground>ul>li>ul>li {
+            width: 25px;
+            height: 25px;
+            outline: 1px solid #ccc;
+        }
+
+        .tree {
+            background: #67c23a;
+        }
+
+        .bar {
+            background: salmon;
+        }
+
+        .zee {
+            background: #36a23c;
+        }
+
+        .elLeft {
+            background: #8e44ad;
+        }
+
+        .elRight {
+            background: #16a085;
+        }
+
+        .square {
+            background: #2c82c9;
+        }
+
+        .control-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin:20px;
+        }
+
+        .control-button>button {
+            border: 1px solid black;
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            margin: 10px;
+        }
+
+        .control-button>#left,
+        #right {
+            background: greenyellow;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="game-text">
+            <span>GAME OVER</span>
+            <button>RESTART</button>
+        </div>
+        <div class="score">0</div>
+        <div class="playground">
+
+            <ul></ul>
+        </div>
+        <div class="control-button">
+            <button id="left">←</button>
+            <button id="down">↓</button>
+            <button id="rotate">↻</button>
+            <button id="right">→</button>
+        </div>
+    </div>
+    <script>
+        const BLOCKS = {
+            square: [
+                [[0, 0], [0, 1], [1, 0], [1, 1]],
+                [[0, 0], [0, 1], [1, 0], [1, 1]],
+                [[0, 0], [0, 1], [1, 0], [1, 1]],
+                [[0, 0], [0, 1], [1, 0], [1, 1]]
+            ],
+            bar: [
+                [[1, 0], [2, 0], [3, 0], [4, 0]],
+                [[2, -1], [2, 0], [2, 1], [2, 2]],
+                [[1, 0], [2, 0], [3, 0], [4, 0]],
+                [[2, -1], [2, 0], [2, 1], [2, 2]]
+            ],
+            tree: [
+                [[1, 0], [0, 1], [1, 1], [2, 1]],
+                [[1, 0], [0, 1], [1, 1], [1, 2]],
+                [[2, 1], [0, 1], [1, 1], [1, 2]],
+                [[2, 1], [1, 2], [1, 1], [1, 0]]
+            ],
+            zee: [
+                [[0, 0], [1, 0], [1, 1], [2, 1]],
+                [[0, 1], [1, 0], [1, 1], [0, 2]],
+                [[0, 1], [1, 1], [1, 2], [2, 2]],
+                [[2, 0], [2, 1], [1, 1], [1, 2]]
+            ],
+            elLeft: [
+                [[0, 0], [0, 1], [1, 1], [2, 1]],
+                [[1, 0], [1, 1], [1, 2], [0, 2]],
+                [[0, 1], [1, 1], [2, 1], [2, 2]],
+                [[1, 0], [2, 0], [1, 1], [1, 2]]
+            ],
+            elRight: [
+                [[1, 0], [2, 0], [1, 1], [1, 2]],
+                [[0, 0], [0, 1], [1, 1], [2, 1]],
+                [[0, 2], [1, 0], [1, 1], [1, 2]],
+                [[0, 1], [1, 1], [2, 1], [2, 2]]
+            ]
+        }
+        //DOM
+        const playground = document.querySelector(".playground>ul")
+        const gameText = document.querySelector(".game-text")
+        const scoreDisplay = document.querySelector(".score")
+        const restartButton = document.querySelector(".game-text > button")
+        const leftButton = document.getElementById("left")
+        const rightButton = document.getElementById("right")
+        const downButton = document.getElementById("down")
+        const rotateButton = document.getElementById("rotate")
+
+        //Setting
+        const GAME_ROWS = 20;
+        const GAME_COLS = 10;
+
+
+        //variables
+        let score = 0
+        let duration = 500
+        let downInterval
+        let tempMovingItem
+
+        const movingItem = {
+            type: "",
+            direction: 3,
+            top: 0,
+            left: 0
+        }
+
+
+        init()
+        //functions
+        function init() {
+            tempMovingItem = { ...movingItem }
+            //{...movingItem} 동일시하는게 아니라  값만 복사
+            for (let i = 0; i < GAME_ROWS; i++) {
+                prependNewLine()
+            }
+            //renderBlocks()
+            generateNewBlock()
+        }
+
+
+
+
+        function prependNewLine() {
+            const li = document.createElement("li")
+            const ul = document.createElement("ul")
+            for (let j = 0; j < GAME_COLS; j++) {
+                const matrix = document.createElement("li")
+                ul.prepend(matrix)
+            }
+            li.prepend(ul)
+            playground.prepend(li)
+        }
+
+        function renderBlocks(moveType = "") {
+            const { type, direction, top, left } = tempMovingItem
+            const movingBlocks = document.querySelectorAll(".moving")
+            movingBlocks.forEach(moving => {
+                moving.classList.remove(type, "moving")
+                // console.log(moving);
+            })
+            BLOCKS[type][direction].some(block => {
+                const x = block[0] + left
+                const y = block[1] + top
+                //조건 ? 참일경우 : 거짓일경우
+                const target = playground.childNodes[y] ? playground.childNodes[y].childNodes[0].childNodes[x] : null
+                const isAvailable = checkEmpty(target)
+                if (isAvailable) {
+                    target.classList.add(type, "moving")
+                } else {
+                    tempMovingItem = { ...movingItem }
+                    if (moveType === 'retry') {
+                        clearInterval(downInterval)
+                        showGameoverText()
+                    }
+                    setTimeout(() => {
+                        renderBlocks('retry')
+                        if (moveType === "top") {
+                            seizeBlock()
+                        }
+                    }, 0)
+                    return true
+                }
+            })
+            movingItem.left = left
+            movingItem.top = top
+            movingItem.direction = direction
+        }
+        function seizeBlock() {
+            const movingBlocks = document.querySelectorAll(".moving")
+            movingBlocks.forEach(moving => {
+                moving.classList.remove("moving")
+                moving.classList.add("seized")
+                // console.log(moving);
+            })
+            checkMatch()
+        }
+        function checkMatch() {
+            const childNodes = playground.childNodes
+            childNodes.forEach(child => {
+                let matched = true
+                child.children[0].childNodes.forEach(li => {
+                    if (!li.classList.contains("seized")) {
+                        matched = false
+                    }
+                })
+                if (matched) {
+                    child.remove()
+                    prependNewLine()
+                    score++
+                    scoreDisplay.innerText = score
+                }
+            })
+            generateNewBlock()
+        }
+        function generateNewBlock() {
+            clearInterval(downInterval)
+            downInterval = setInterval(() => {
+                moveBlock('top', 1)
+            }, duration)
+
+
+            const blockArray = Object.entries(BLOCKS)
+            const randomIndex = Math.floor(Math.random() * blockArray.length)
+            movingItem.type = blockArray[randomIndex][0]
+            movingItem.top = 0
+            movingItem.left = 3
+            movingItem.direction = 0
+            tempMovingItem = { ...movingItem }
+            renderBlocks()
+        }
+
+        function checkEmpty(target) {
+            if (!target || target.classList.contains("seized")) { return false }
+            return true
+        }
+        function moveBlock(moveType, amount) {
+            tempMovingItem[moveType] += amount
+            renderBlocks(moveType)
+        }
+        function changeDirection() {
+            const direction = tempMovingItem.direction
+            direction === 3 ? tempMovingItem.direction = 0 : tempMovingItem.direction += 1
+            renderBlocks()
+            // tempMovingItem.direction+=1
+            // if(tempMovingItem.direction===4){
+            //     tempMovingItem.direction=0
+            // }
+        }
+        function dropBlock() {
+            clearInterval(downInterval)
+            downInterval = setInterval(() => {
+                moveBlock("top", 1)
+            }, 10)
+        }
+        function showGameoverText() {
+            gameText.style.display = "flex"
+        }
+        //event handling
+        document.addEventListener("keydown", e => {
+            switch (e.keyCode) {
+                case 39:
+                    moveBlock("left", 1)
+                    break
+                case 37:
+                    moveBlock("left", -1)
+                    break
+                case 40:
+                    moveBlock("top", 1)
+                    break
+                case 38:
+                    changeDirection()
+                    break
+                case 32:
+                    dropBlock()
+                    break
+                default:
+                    break
+            }
+            //console.log(e);
+        })
+        restartButton.addEventListener("click", () => {
+            playground.innerHTML = ""
+            gameText.style.display = "none"
+            init()
+        })
+        leftButton.addEventListener("click", () => {
+            moveBlock("left", -1)
+        })
+        rightButton.addEventListener("click", () => {
+            moveBlock("left", 1)
+        })
+        downButton.addEventListener("click", () => {
+            dropBlock()
+        })
+        rotateButton.addEventListener("click", () => {
+            changeDirection()
+        })
+    </script>
+</body>
+
+</html>

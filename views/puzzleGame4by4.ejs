@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUZZLE GAME</title>
+    <style>
+        *{
+    margin: 0;
+    padding: 0;
+}
+:root{--facebook:#3b5999} /*색상을 변수로 지정*/
+.wrap-all{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.play-time{
+    font-size: 3rem;
+    margin-top: 2rem;
+    color: var(--facebook);
+}
+ul{
+    margin-top: 1rem;
+    list-style: none;
+    border: 2px solid var(--facebook);
+    display: grid;  /*grid형식*/
+    grid-template-columns: repeat(4,1fr);   /*4by4*/
+}
+li{
+    width: 100px;
+    height: 100px;
+    color: #fff;
+    background: url("https://placeimg.com/400/400/any");
+}
+.start-button{
+    background: var(--facebook);
+    color: #fff;
+    border: none;
+    padding: 1rem 2rem;
+    margin-top: 1rem;
+}
+.game-text{
+    position: absolute;
+    font-size: 45px;
+    color: #67c23a;
+    text-shadow: 1px 1px rgba(0, 0, 0, 0.5);
+    display: none;
+}
+.list0{
+    background-position-x: 0px;
+    background-position-y: 0px;
+}
+.list1{
+    background-position-x: -100px;
+    background-position-y: 0px;
+}
+.list2{
+    background-position-x: -200px;
+    background-position-y: 0px;
+}
+.list3{
+    background-position-x: -300px;
+    background-position-y: 0px;
+}
+.list4{
+    background-position-x: -0px;
+    background-position-y: -100px;
+}
+.list5{
+    background-position-x: -100px;
+    background-position-y: -100px;
+}
+.list6{
+    background-position-x: -200px;
+    background-position-y: -100px;
+}
+.list7{
+    background-position-x: -300px;
+    background-position-y: -100px;
+}
+.list8{
+    background-position-x: 0px;
+    background-position-y: -200px;
+}
+.list9{
+    background-position-x: -100px;
+    background-position-y: -200px;
+}
+.list10{
+    background-position-x: -200px;
+    background-position-y: -200px;
+}
+.list11{
+    background-position-x: -300px;
+    background-position-y: -200px;
+}
+.list12{
+    background-position-x: 0px;
+    background-position-y: -300px;
+}
+.list13{
+    background-position-x: -100px;
+    background-position-y: -300px;
+}
+.list14{
+    background-position-x: -200px;
+    background-position-y: -300px;
+}
+.list15{
+    background-position-x: -300px;
+    background-position-y: -300px;
+}
+    </style>
+</head>
+
+<body>
+    <div class="wrap-all">
+        <p class="play-time">0</p>
+        <ul class="image-container">
+        </ul>
+        <button class="start-button">START</button>
+        <p class="game-text">COMPLETE!</p>
+    </div>
+    <script>
+        //각 클래스 인덱스 받아오기
+const container=document.querySelector('.image-container');
+const startButton=document.querySelector('.start-button');
+const gameText=document.querySelector('.game-text');
+const playTime=document.querySelector('.play-time');
+
+const tileCount=16;
+let tiles=[];
+const dragged={
+    el:null,
+    class:null,
+    index:null
+};
+let isPlaying=false;
+let timeInterval=null;
+let time=0;
+
+function checkStatus(){
+    const currentList=[...container.children];
+    const unMatchedList=currentList.filter((child, index)=>Number(child.getAttribute("data-index"))!==index)
+    if(unMatchedList.length===0){
+        gameText.style.display='block';
+        isPlaying=false;
+        clearInterval(timeInterval);
+    }
+}
+function setGame(){
+    isPlaying=true;
+    time=0;
+    container.innerHTML=''; //초기화
+    gameText.style.display='none';
+    clearInterval(timeInterval);
+    
+    tiles=createImageTiles();
+    tiles.forEach(tile=>container.appendChild(tile));
+    setTimeout(() => {
+        container.innerHTML=''; //이미 있는 이미지 삭제
+        shuffle(tiles).forEach(tile=>container.appendChild(tile));
+        timeInterval=setInterval(()=>{
+            playTime.innerText=time;
+            time++;
+        },1000)
+    }, 5000);   //5초뒤 셔플
+}
+
+function createImageTiles(){
+    const tempArray=[];
+    Array(tileCount).fill().forEach((_,i)=>{    //16조각의 사진들로 랜더링
+        //console.log(i)  index만뽑기//
+        const li=document.createElement('li');
+        li.setAttribute('data-index', i);
+        li.setAttribute('draggable', 'true');
+        li.classList.add(`list${i}`);
+        //console.log(li)
+        tempArray.push(li);
+    })  
+    return tempArray;
+}
+
+
+function shuffle(array){    //사진조각들을 셔플
+    let index=array.length-1;
+    while(index>0){
+        const randomIndex=Math.floor(Math.random()*(index+1));
+        [array[index], array[randomIndex]]=[array[randomIndex], array[index]]
+        index--;
+    }
+    return array;
+}
+
+//이벤트
+container.addEventListener('dragstart', e=>{
+    if(!isPlaying) return;
+    //console.log(e)
+    const obj=e.target;
+    dragged.el=obj;
+    dragged.class=obj.className;
+    dragged.index=[...obj.parentNode.children].indexOf(obj)
+    //... => 강제로 배열만드는거
+})
+container.addEventListener('dragover', e=>{
+    e.preventDefault();
+    //console.log('over')
+})
+container.addEventListener('drop', e=>{
+    if(!isPlaying) return;
+    //console.log('dropped')
+    const obj=e.target;
+    //console.log({obj})
+    //console.log({obj});
+    if(obj.className!==dragged.class){
+        let originPlace;
+        let isLast=false;   //마지막 요소 확인
+
+        if(dragged.el.nextSibling){
+            originPlace=dragged.el.nextSibling;
+        }
+        else{
+            originPlace=dragged.el.previousSibling;
+            isLast=true; 
+        }   
+        //obj.before(dragged.el) 옮기는거 그러나 뒤로 옮기거나 옆으로 옮기는건 안됨
+        const droppedIndex=[...obj.parentNode.children].indexOf(obj);
+        //좌우 변환
+        dragged.index>droppedIndex ? obj.before(dragged.el) : obj.after(dragged.el)
+        //상하 변환
+        isLast ? originPlace.after(obj) : originPlace.before(obj)
+    }
+    checkStatus()
+
+})
+startButton.addEventListener('click', ()=>{
+    setGame();  //start버튼을 눌러야 게임이 실행됨
+})
+    </script>
+</body>
+
+</html>
